@@ -24,6 +24,8 @@ import (
 	"github.com/pkg/errors"
 
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 const (
@@ -284,6 +286,7 @@ func (l *LinuxFactory) Create(id string, config *configs.Config) (Container, err
 }
 
 func (l *LinuxFactory) Load(id string) (Container, error) {
+	defer u.Duration(u.Track("libContainer.Load"))
 	if l.Root == "" {
 		return nil, newGenericError(fmt.Errorf("invalid root"), ConfigInvalid)
 	}

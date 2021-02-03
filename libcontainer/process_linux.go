@@ -23,6 +23,8 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 // Synchronisation value for cgroup namespace setup.
@@ -87,6 +89,7 @@ func (p *setnsProcess) signal(sig os.Signal) error {
 }
 
 func (p *setnsProcess) start() (retErr error) {
+	defer u.Duration(u.Track("setnsProcess.start"))
 	defer p.messageSockPair.parent.Close()
 	err := p.cmd.Start()
 	// close the write-side of the pipes (controlled by child)
@@ -289,6 +292,7 @@ func (p *initProcess) getChildPid() (int, error) {
 }
 
 func (p *initProcess) waitForChildExit(childPid int) error {
+	defer u.Duration(u.Track("initProcess.waitForChildExit"))
 	status, err := p.cmd.Process.Wait()
 	if err != nil {
 		p.cmd.Wait()
@@ -309,6 +313,7 @@ func (p *initProcess) waitForChildExit(childPid int) error {
 }
 
 func (p *initProcess) start() (retErr error) {
+	defer u.Duration(u.Track("initProcess.start"))
 	defer p.messageSockPair.parent.Close()
 	err := p.cmd.Start()
 	p.process.ops = p
@@ -344,9 +349,11 @@ func (p *initProcess) start() (retErr error) {
 			return newSystemErrorWithCause(err, "applying Intel RDT configuration for process")
 		}
 	}
+	tik := u.Tik("io.Copy")
 	if _, err := io.Copy(p.messageSockPair.parent, p.bootstrapData); err != nil {
 		return newSystemErrorWithCause(err, "copying bootstrap data to pipe")
 	}
+	u.Duration("io.Copy", tik)
 	childPid, err := p.getChildPid()
 	if err != nil {
 		return newSystemErrorWithCause(err, "getting the final child's pid from pipe")
@@ -361,12 +368,14 @@ func (p *initProcess) start() (retErr error) {
 	}
 	p.setExternalDescriptors(fds)
 
+	tik = u.Tik("initProcess.start:setCgroupNamespace")
 	// Now it's time to setup cgroup namesapce
 	if p.config.Config.Namespaces.Contains(configs.NEWCGROUP) && p.config.Config.Namespaces.PathOf(configs.NEWCGROUP) == "" {
 		if _, err := p.messageSockPair.parent.Write([]byte{createCgroupns}); err != nil {
 			return newSystemErrorWithCause(err, "sending synchronization value to init process")
 		}
 	}
+	u.Duration("initProcess.start:setCgroupNamespace", tik)
 
 	// Wait for our first child to exit
 	if err := p.waitForChildExit(childPid); err != nil {
@@ -387,6 +396,7 @@ func (p *initProcess) start() (retErr error) {
 		sentResume bool
 	)
 
+	tik = u.Tik("initProcess.start:sync")
 	ierr := parseSync(p.messageSockPair.parent, func(sync *syncT) error {
 		switch sync.Type {
 		case procReady:
@@ -491,6 +501,8 @@ func (p *initProcess) start() (retErr error) {
 		return nil
 	})
 
+	u.Duration("initProcess.start:sync", tik)
+
 	if !sentRun {
 		return newSystemErrorWithCause(ierr, "container init")
 	}
@@ -545,6 +557,7 @@ func (p *initProcess) updateSpecState() error {
 }
 
 func (p *initProcess) sendConfig() error {
+	defer u.Duration(u.Track("initProcess.sendConfig"))
 	// send the config to the container's init process, we don't use JSON Encode
 	// here because there might be a problem in JSON decoder in some cases, see:
 	// https://github.com/docker/docker/issues/14203#issuecomment-174177790
@@ -552,6 +565,7 @@ func (p *initProcess) sendConfig() error {
 }
 
 func (p *initProcess) createNetworkInterfaces() error {
+	defer u.Duration(u.Track("initProcess.createNetworkInterfaces"))
 	for _, config := range p.config.Config.Networks {
 		strategy, err := getStrategy(config.Type)
 		if err != nil {

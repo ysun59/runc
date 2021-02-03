@@ -8,6 +8,8 @@ import (
 	"os/exec"
 
 	"github.com/opencontainers/runc/libcontainer/system"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 func newRestoredProcess(cmd *exec.Cmd, fds []string) (*restoredProcess, error) {
@@ -33,6 +35,7 @@ type restoredProcess struct {
 }
 
 func (p *restoredProcess) start() error {
+	u.Duration(u.Track("restoredProcess.start"))
 	return newGenericError(fmt.Errorf("restored process cannot be started"), SystemError)
 }
 
@@ -90,6 +93,7 @@ type nonChildProcess struct {
 }
 
 func (p *nonChildProcess) start() error {
+	defer u.Duration(u.Track("nonChildProcess.start"))
 	return newGenericError(fmt.Errorf("restored process cannot be started"), SystemError)
 }
 

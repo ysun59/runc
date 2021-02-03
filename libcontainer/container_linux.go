@@ -34,6 +34,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink/nl"
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 const stdioFdCount = 3
@@ -250,6 +252,7 @@ func (c *linuxContainer) Set(config configs.Config) error {
 }
 
 func (c *linuxContainer) Start(process *Process) error {
+	defer u.Duration(u.Track("libContainer.Start"))
 	c.m.Lock()
 	defer c.m.Unlock()
 	if c.config.Cgroups.Resources.SkipDevices {
@@ -270,6 +273,7 @@ func (c *linuxContainer) Start(process *Process) error {
 }
 
 func (c *linuxContainer) Run(process *Process) error {
+	defer u.Duration(u.Track("libContainer.Run"))
 	if err := c.Start(process); err != nil {
 		return err
 	}
@@ -280,12 +284,14 @@ func (c *linuxContainer) Run(process *Process) error {
 }
 
 func (c *linuxContainer) Exec() error {
+	defer u.Duration(u.Track("libContainer.Exec"))
 	c.m.Lock()
 	defer c.m.Unlock()
 	return c.exec()
 }
 
 func (c *linuxContainer) exec() error {
+	defer u.Duration(u.Track("libContainer.exec"))
 	path := filepath.Join(c.root, execFifoFilename)
 	pid := c.initProcess.pid()
 	blockingFifoOpenCh := awaitFifoOpen(path)
@@ -358,6 +364,7 @@ type openResult struct {
 }
 
 func (c *linuxContainer) start(process *Process) error {
+	defer u.Duration(u.Track("libContainer.start"))
 	parent, err := c.newParentProcess(process)
 	if err != nil {
 		return newSystemErrorWithCause(err, "creating new parent process")
@@ -410,6 +417,7 @@ func (c *linuxContainer) Signal(s os.Signal, all bool) error {
 }
 
 func (c *linuxContainer) createExecFifo() error {
+	defer u.Duration(u.Track("libContainer.createExecFifo"))
 	rootuid, err := c.Config().HostRootUID()
 	if err != nil {
 		return err
@@ -455,6 +463,7 @@ func (c *linuxContainer) includeExecFifo(cmd *exec.Cmd) error {
 }
 
 func (c *linuxContainer) newParentProcess(p *Process) (parentProcess, error) {
+	defer u.Duration(u.Track("libContainer.newParentProcess"))
 	parentInitPipe, childInitPipe, err := utils.NewSockPair("init")
 	if err != nil {
 		return nil, newSystemErrorWithCause(err, "creating new init pipe")
@@ -523,6 +532,7 @@ func (c *linuxContainer) commandTemplate(p *Process, childInitPipe *os.File, chi
 }
 
 func (c *linuxContainer) newInitProcess(p *Process, cmd *exec.Cmd, messageSockPair, logFilePair filePair) (*initProcess, error) {
+	defer u.Duration(u.Track("libContainer.newInitProcess"))
 	cmd.Env = append(cmd.Env, "_LIBCONTAINER_INITTYPE="+string(initStandard))
 	nsMaps := make(map[configs.NamespaceType]string)
 	for _, ns := range c.config.Namespaces {
@@ -552,6 +562,7 @@ func (c *linuxContainer) newInitProcess(p *Process, cmd *exec.Cmd, messageSockPa
 }
 
 func (c *linuxContainer) newSetnsProcess(p *Process, cmd *exec.Cmd, messageSockPair, logFilePair filePair) (*setnsProcess, error) {
+	defer u.Duration(u.Track("libContainer.newSetnsProcess"))
 	cmd.Env = append(cmd.Env, "_LIBCONTAINER_INITTYPE="+string(initSetns))
 	state, err := c.currentState()
 	if err != nil {
@@ -620,6 +631,7 @@ func (c *linuxContainer) Destroy() error {
 }
 
 func (c *linuxContainer) Pause() error {
+	defer u.Duration(u.Track("libContainer.Pause"))
 	c.m.Lock()
 	defer c.m.Unlock()
 	status, err := c.currentStatus()
@@ -639,6 +651,7 @@ func (c *linuxContainer) Pause() error {
 }
 
 func (c *linuxContainer) Resume() error {
+	defer u.Duration(u.Track("libContainer.Resume"))
 	c.m.Lock()
 	defer c.m.Unlock()
 	status, err := c.currentStatus()

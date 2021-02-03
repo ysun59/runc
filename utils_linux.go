@@ -23,12 +23,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 var errEmptyID = errors.New("container id cannot be empty")
 
 // loadFactory returns the configured factory instance for execing containers.
 func loadFactory(context *cli.Context) (libcontainer.Factory, error) {
+	defer u.Duration(u.Track("loadFactory"))
 	root := context.GlobalString("root")
 	abs, err := filepath.Abs(root)
 	if err != nil {
@@ -78,6 +81,7 @@ func loadFactory(context *cli.Context) (libcontainer.Factory, error) {
 // getContainer returns the specified container instance by loading it from state
 // with the default factory.
 func getContainer(context *cli.Context) (libcontainer.Container, error) {
+	defer u.Duration(u.Track("getContainer"))
 	id := context.Args().First()
 	if id == "" {
 		return nil, errEmptyID
@@ -100,6 +104,7 @@ func getDefaultImagePath(context *cli.Context) string {
 // newProcess returns a new libcontainer Process with the arguments from the
 // spec and stdio from the current process.
 func newProcess(p specs.Process, init bool, logLevel string) (*libcontainer.Process, error) {
+	defer u.Duration(u.Track("newProcess"))
 	lp := &libcontainer.Process{
 		Args: p.Args,
 		Env:  p.Env,
@@ -140,6 +145,7 @@ func newProcess(p specs.Process, init bool, logLevel string) (*libcontainer.Proc
 }
 
 func destroy(container libcontainer.Container) {
+	defer u.Duration(u.Track("destroy"))
 	if err := container.Destroy(); err != nil {
 		logrus.Error(err)
 	}
@@ -147,6 +153,7 @@ func destroy(container libcontainer.Container) {
 
 // setupIO modifies the given process config according to the options.
 func setupIO(process *libcontainer.Process, rootuid, rootgid int, createTTY, detach bool, sockpath string) (*tty, error) {
+	defer u.Duration(u.Track("setupIO"))
 	if createTTY {
 		process.Stdin = nil
 		process.Stdout = nil
@@ -201,6 +208,7 @@ func setupIO(process *libcontainer.Process, rootuid, rootgid int, createTTY, det
 // it creates a temp file with the paths filename + '.' infront of it
 // then renames the file
 func createPidFile(path string, process *libcontainer.Process) error {
+	defer u.Duration(u.Track("createPidFile"))
 	pid, err := process.Pid()
 	if err != nil {
 		return err
@@ -222,6 +230,7 @@ func createPidFile(path string, process *libcontainer.Process) error {
 }
 
 func createContainer(context *cli.Context, id string, spec *specs.Spec) (libcontainer.Container, error) {
+	defer u.Duration(u.Track("createContainer"))
 	rootlessCg, err := shouldUseRootlessCgroupManager(context)
 	if err != nil {
 		return nil, err
@@ -263,6 +272,7 @@ type runner struct {
 }
 
 func (r *runner) run(config *specs.Process) (int, error) {
+	defer u.Duration(u.Track("run"))
 	var err error
 	defer func() {
 		if err != nil {
@@ -400,6 +410,7 @@ const (
 )
 
 func startContainer(context *cli.Context, spec *specs.Spec, action CtAct, criuOpts *libcontainer.CriuOpts) (int, error) {
+	defer u.Duration(u.Track("startContainer"))
 	id := context.Args().First()
 	if id == "" {
 		return -1, errEmptyID

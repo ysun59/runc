@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"github.com/urfave/cli"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 var createCommand = cli.Command{
@@ -52,6 +54,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		},
 	},
 	Action: func(context *cli.Context) error {
+		tik := u.Tik("create")
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err
 		}
@@ -66,6 +69,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		if err != nil {
 			return err
 		}
+		u.Duration("create", tik)
 		// exit with the container's exit status so any external supervisor is
 		// notified of the exit with the correct exit status.
 		os.Exit(status)

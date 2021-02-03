@@ -31,7 +31,7 @@ func init() {
 		if err != nil {
 			panic(fmt.Sprintf("libcontainer: failed to configure logging: %v", err))
 		}
-		logrus.Debug("child process in init()")
+		// logrus.Debug("child process in init()")
 	}
 }
 

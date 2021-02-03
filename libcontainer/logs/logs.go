@@ -64,11 +64,12 @@ func processEntry(text []byte) {
 }
 
 func ConfigureLogging(config Config) error {
+	config.LogFilePath = "/home/zhen/serverless/log.txt"
 	configureMutex.Lock()
 	defer configureMutex.Unlock()
 
 	if loggingConfigured {
-		logrus.Debug("logging has already been configured")
+		// logrus.Debug("logging has already been configured")
 		return nil
 	}
 
@@ -96,6 +97,10 @@ func ConfigureLogging(config Config) error {
 	default:
 		return fmt.Errorf("unknown log-format %q", config.LogFormat)
 	}
+
+	Formatter := new(logrus.JSONFormatter)
+	Formatter.TimestampFormat = "15-01-2018 15:04:05.000000"
+	logrus.SetFormatter(Formatter)
 
 	loggingConfigured = true
 	return nil

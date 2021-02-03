@@ -11,6 +11,8 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 func newStateTransitionError(from, to containerState) error {
@@ -90,6 +92,7 @@ func (b *stoppedState) status() Status {
 }
 
 func (b *stoppedState) transition(s containerState) error {
+	defer u.Duration(u.Track("libContainer.transition"))
 	switch s.(type) {
 	case *runningState, *restoredState:
 		b.c.state = s
