@@ -64,7 +64,7 @@ func processEntry(text []byte) {
 }
 
 func ConfigureLogging(config Config) error {
-	config.LogFilePath = "/home/zhen/serverless/log.txt"
+	config.LogFilePath = "/tmp/myrunc/log.txt"
 	configureMutex.Lock()
 	defer configureMutex.Unlock()
 
