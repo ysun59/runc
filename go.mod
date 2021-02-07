@@ -3,6 +3,8 @@ module github.com/opencontainers/runc
 go 1.14
 
 require (
+	github.com/ccding/go-config-reader v0.0.0-20130817225950-8b6c2b50197f // indirect
+	github.com/ccding/go-logging v0.0.0-20190618175518-0ac4cc1a6533
 	github.com/checkpoint-restore/go-criu/v4 v4.1.0
 	github.com/cilium/ebpf v0.2.0
 	github.com/containerd/console v1.0.1
@@ -11,6 +13,7 @@ require (
 	github.com/docker/go-units v0.4.0
 	github.com/godbus/dbus/v5 v5.0.3
 	github.com/golang/protobuf v1.4.3
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/moby/sys/mountinfo v0.4.0
 	github.com/mrunalp/fileutils v0.5.0
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d

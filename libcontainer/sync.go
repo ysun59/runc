@@ -7,6 +7,8 @@ import (
 	"io"
 
 	"github.com/opencontainers/runc/libcontainer/utils"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 type syncType string
@@ -37,12 +39,14 @@ type syncT struct {
 // writeSync is used to write to a synchronisation pipe. An error is returned
 // if there was a problem writing the payload.
 func writeSync(pipe io.Writer, sync syncType) error {
+	defer u.Duration(u.Track("writeSync"))
 	return utils.WriteJSON(pipe, syncT{sync})
 }
 
 // readSync is used to read from a synchronisation pipe. An error is returned
 // if we got a genericError, the pipe was closed, or we got an unexpected flag.
 func readSync(pipe io.Reader, expected syncType) error {
+	defer u.Duration(u.Track("readSync"))
 	var procSync syncT
 	if err := json.NewDecoder(pipe).Decode(&procSync); err != nil {
 		if err == io.EOF {
@@ -70,6 +74,7 @@ func readSync(pipe io.Reader, expected syncType) error {
 // parseSync runs the given callback function on each syncT received from the
 // child. It will return once io.EOF is returned from the given pipe.
 func parseSync(pipe io.Reader, fn func(*syncT) error) error {
+	defer u.Duration(u.Track("parseSync"))
 	dec := json.NewDecoder(pipe)
 	for {
 		var sync syncT

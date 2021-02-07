@@ -20,6 +20,7 @@ paused. `,
 
 Use runc list to identify instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
+		defer u.LogFlush()
 		defer u.Duration(u.Track("puase"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err
@@ -50,6 +51,7 @@ resumed.`,
 
 Use runc list to identify instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
+		defer u.LogFlush()
 		defer u.Duration(u.Track("resume"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err

@@ -55,6 +55,28 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 	},
 	Action: func(context *cli.Context) error {
 		tik := u.Tik("create")
+
+		tik_test := u.Tik("test")
+		
+		tik_t1 := u.Tik("t1")
+		u.Duration("t1", tik_t1)
+
+		tik_t2 := u.Tik("t2")
+		u.Duration("t2", tik_t2)
+
+		tik_t3 := u.Tik("t3")
+		u.Duration("t3", tik_t3)
+
+		tik_t4 := u.Tik("t4")
+		u.Duration("t4", tik_t4)
+
+		tik_t5 := u.Tik("t5")
+		u.Duration("t5", tik_t5)
+
+		u.Duration("test", tik_test)
+
+
+
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err
 		}
@@ -70,6 +92,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 			return err
 		}
 		u.Duration("create", tik)
+		u.LogFlush()
 		// exit with the container's exit status so any external supervisor is
 		// notified of the exit with the correct exit status.
 		os.Exit(status)

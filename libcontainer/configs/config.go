@@ -11,6 +11,8 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 type Rlimit struct {
@@ -257,6 +259,7 @@ type Capabilities struct {
 }
 
 func (hooks HookList) RunHooks(state *specs.State) error {
+	defer u.Duration(u.Track("RunHooks"))
 	for i, h := range hooks {
 		if err := h.Run(state); err != nil {
 			return errors.Wrapf(err, "Running hook #%d:", i)

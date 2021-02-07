@@ -21,6 +21,7 @@ are starting. The name you provide for the container instance must be unique on
 your host.`,
 	Description: `The start command executes the user defined process in a created container.`,
 	Action: func(context *cli.Context) error {
+		defer u.LogFlush()
 		defer u.Duration(u.Track("start"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err

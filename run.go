@@ -65,6 +65,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		},
 	},
 	Action: func(context *cli.Context) error {
+		defer u.LogFlush()
 		defer u.Duration(u.Track("run"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err

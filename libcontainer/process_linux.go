@@ -400,6 +400,7 @@ func (p *initProcess) start() (retErr error) {
 	ierr := parseSync(p.messageSockPair.parent, func(sync *syncT) error {
 		switch sync.Type {
 		case procReady:
+			tik_procReady := u.Tik("sync_procReady")
 			// set rlimits, this has to be done here because we lose permissions
 			// to raise the limits once we enter a user-namespace
 			if err := setupRlimits(p.config.Rlimits, p.pid()); err != nil {
@@ -462,18 +463,29 @@ func (p *initProcess) start() (retErr error) {
 				return newSystemErrorWithCause(err, "writing syncT 'run'")
 			}
 			sentRun = true
+			u.Duration("sync_procReady", tik_procReady)
 		case procHooks:
+			tik_procHooks := u.Tik("sync_procHooks")
 			// Setup cgroup before prestart hook, so that the prestart hook could apply cgroup permissions.
+			tik_cgroup := u.Tik("cgroup")
 			if err := p.manager.Set(p.config.Config); err != nil {
 				return newSystemErrorWithCause(err, "setting cgroup config for procHooks process")
 			}
+			u.Duration("cgroup", tik_cgroup)
+
+			tik_intelRdtManager := u.Tik("intelRdtManager")
 			if p.intelRdtManager != nil {
 				if err := p.intelRdtManager.Set(p.config.Config); err != nil {
 					return newSystemErrorWithCause(err, "setting Intel RDT config for procHooks process")
 				}
 			}
+			u.Duration("intelRdtManager", tik_intelRdtManager)
+
+			tik_hooks := u.Tik("hooks")
 			if p.config.Config.Hooks != nil {
+				tik_currentOCIState := u.Tik("currentOCIState")
 				s, err := p.container.currentOCIState()
+				u.Duration("currentOCIState", tik_currentOCIState)
 				if err != nil {
 					return err
 				}
@@ -482,18 +494,26 @@ func (p *initProcess) start() (retErr error) {
 				s.Status = specs.StateCreating
 				hooks := p.config.Config.Hooks
 
+				tik_configsPrestart := u.Tik("configsPrestart")
 				if err := hooks[configs.Prestart].RunHooks(s); err != nil {
 					return err
 				}
+				u.Duration("configsPrestart", tik_configsPrestart)
+
+				tik_configsCreateRuntime := u.Tik("configsCreateRuntime")
 				if err := hooks[configs.CreateRuntime].RunHooks(s); err != nil {
 					return err
 				}
+				u.Duration("configsCreateRuntime", tik_configsCreateRuntime)
 			}
+
+			u.Duration("hooks", tik_hooks)
 			// Sync with child.
 			if err := writeSync(p.messageSockPair.parent, procResume); err != nil {
 				return newSystemErrorWithCause(err, "writing syncT 'resume'")
 			}
 			sentResume = true
+			u.Duration("sync_procHooks", tik_procHooks)
 		default:
 			return newSystemError(errors.New("invalid JSON payload from child"))
 		}

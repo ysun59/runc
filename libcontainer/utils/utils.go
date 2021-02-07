@@ -10,6 +10,8 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/unix"
+
+	u "github.com/opencontainers/runc/utils"
 )
 
 const (
@@ -51,6 +53,7 @@ func ExitStatus(status unix.WaitStatus) int {
 
 // WriteJSON writes the provided struct v to w using standard json marshaling
 func WriteJSON(w io.Writer, v interface{}) error {
+	defer u.Duration(u.Track("WriteJSON"))
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err
