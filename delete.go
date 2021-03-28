@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli"
 
 	"golang.org/x/sys/unix"
+	u "github.com/opencontainers/runc/utils"
 )
 
 func killContainer(container libcontainer.Container) error {
@@ -47,6 +48,8 @@ status of "ubuntu01" as "stopped" the following will delete resources held for
 		},
 	},
 	Action: func(context *cli.Context) error {
+		defer u.LogFlush()
+		defer u.Duration(u.Track("deletesy"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err
 		}

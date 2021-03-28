@@ -11,6 +11,14 @@ func init() {
 	logger, _ = logging.FileLogger("RuncTiming", logging.INFO, logging.BasicFormat, logging.DefaultTimeFormat, "/tmp/myrunc/log.txt", false)
 }
 
+func Info(msg string) {
+	logger.Info(msg)
+}
+
+func Infof(format string, v ...interface{}) {
+	logger.Infof(format, v)
+}
+
 
 func Track(msg string) (string, time.Time) {
 	logger.Infof("%v begin:", msg)
