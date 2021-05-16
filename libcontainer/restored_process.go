@@ -9,7 +9,7 @@ import (
 
 	"github.com/opencontainers/runc/libcontainer/system"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 func newRestoredProcess(cmd *exec.Cmd, fds []string) (*restoredProcess, error) {
@@ -35,7 +35,7 @@ type restoredProcess struct {
 }
 
 func (p *restoredProcess) start() error {
-	u.Duration(u.Track("restoredProcess.start"))
+	defer u.LogEnd(u.LogBegin("restoredProcess.start"))
 	return newGenericError(fmt.Errorf("restored process cannot be started"), SystemError)
 }
 
@@ -93,7 +93,7 @@ type nonChildProcess struct {
 }
 
 func (p *nonChildProcess) start() error {
-	defer u.Duration(u.Track("nonChildProcess.start"))
+	defer u.LogEnd(u.LogBegin("nonChildProcess.start"))
 	return newGenericError(fmt.Errorf("restored process cannot be started"), SystemError)
 }
 

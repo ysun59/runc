@@ -1,3 +1,7 @@
+# github.com/YesZhen/superlog_go v0.2.0
+## explicit
+github.com/YesZhen/superlog_go
+github.com/YesZhen/superlog_go/superlog
 # github.com/ccding/go-config-reader v0.0.0-20130817225950-8b6c2b50197f
 ## explicit
 github.com/ccding/go-config-reader/config
@@ -63,6 +67,8 @@ github.com/russross/blackfriday/v2
 github.com/seccomp/libseccomp-golang
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
+# github.com/silentred/gid v1.0.0
+github.com/silentred/gid
 # github.com/sirupsen/logrus v1.7.0
 ## explicit
 github.com/sirupsen/logrus

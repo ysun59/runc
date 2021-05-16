@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
+	u "github.com/YesZhen/superlog_go"
 )
 
 type initType string
@@ -232,6 +233,7 @@ func syncParentReady(pipe io.ReadWriter) error {
 // the parent should execute pre-start hooks. It then waits for the parent to
 // indicate that it is cleared to resume.
 func syncParentHooks(pipe io.ReadWriter) error {
+	defer u.LogEnd(u.LogBegin("syncParentHooks"))
 	// Tell parent.
 	if err := writeSync(pipe, procHooks); err != nil {
 		return err

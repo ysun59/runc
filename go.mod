@@ -3,6 +3,7 @@ module github.com/opencontainers/runc
 go 1.14
 
 require (
+	github.com/YesZhen/superlog_go v0.2.0
 	github.com/ccding/go-config-reader v0.0.0-20130817225950-8b6c2b50197f // indirect
 	github.com/ccding/go-logging v0.0.0-20190618175518-0ac4cc1a6533
 	github.com/checkpoint-restore/go-criu/v4 v4.1.0

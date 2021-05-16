@@ -25,6 +25,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"golang.org/x/sys/unix"
+	u "github.com/YesZhen/superlog_go"
 )
 
 const defaultMountFlags = unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_NODEV
@@ -43,6 +44,7 @@ func needsSetupDev(config *configs.Config) bool {
 // inside a new mount namespace. It doesn't set anything as ro. You must call
 // finalizeRootfs after this function to finish setting up the rootfs.
 func prepareRootfs(pipe io.ReadWriter, iConfig *initConfig) (err error) {
+	defer u.LogEnd(u.LogBegin("prepareRootfs"))
 	config := iConfig.Config
 	if err := prepareRoot(config); err != nil {
 		return newSystemErrorWithCause(err, "preparing rootfs")

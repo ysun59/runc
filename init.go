@@ -10,6 +10,7 @@ import (
 	_ "github.com/opencontainers/runc/libcontainer/nsenter"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	u "github.com/YesZhen/superlog_go"
 )
 
 func init() {
@@ -39,6 +40,7 @@ var initCommand = cli.Command{
 	Name:  "init",
 	Usage: `initialize the namespaces and launch the process (do not call it outside of runc)`,
 	Action: func(context *cli.Context) error {
+		defer u.LogEnd(u.LogBegin("StartInitializationsy"))
 		factory, _ := libcontainer.New("")
 		if err := factory.StartInitialization(); err != nil {
 			// as the error is sent back to the parent there is no need to log

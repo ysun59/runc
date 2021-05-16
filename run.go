@@ -7,7 +7,7 @@ import (
 
 	"github.com/urfave/cli"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 // default action is to start a container
@@ -65,8 +65,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		},
 	},
 	Action: func(context *cli.Context) error {
-		defer u.LogFlush()
-		defer u.Duration(u.Track("run"))
+		defer u.LogEnd(u.LogBegin("run"))
 		if err := checkArgs(context, 1, exactArgs); err != nil {
 			return err
 		}

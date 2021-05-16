@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 const (
@@ -286,7 +286,7 @@ func (l *LinuxFactory) Create(id string, config *configs.Config) (Container, err
 }
 
 func (l *LinuxFactory) Load(id string) (Container, error) {
-	defer u.Duration(u.Track("libContainer.Load"))
+	defer u.LogEnd(u.LogBegin("libContainer.Load"))
 	if l.Root == "" {
 		return nil, newGenericError(fmt.Errorf("invalid root"), ConfigInvalid)
 	}
@@ -338,6 +338,7 @@ func (l *LinuxFactory) Type() string {
 // StartInitialization loads a container by opening the pipe fd from the parent to read the configuration and state
 // This is a low level implementation detail of the reexec and should not be consumed externally
 func (l *LinuxFactory) StartInitialization() (err error) {
+	defer u.LogEnd(u.LogBegin("StartInitialization"))
 	// Get the INITPIPE.
 	envInitPipe := os.Getenv("_LIBCONTAINER_INITPIPE")
 	pipefd, err := strconv.Atoi(envInitPipe)

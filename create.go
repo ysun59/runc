@@ -5,7 +5,7 @@ import (
 
 	"github.com/urfave/cli"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 var createCommand = cli.Command{
@@ -54,26 +54,26 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		},
 	},
 	Action: func(context *cli.Context) error {
-		tik := u.Tik("create")
+		d, t := u.LogBegin("create")
 
-		tik_test := u.Tik("test")
+		d, test := u.LogBegin("test")
 		
-		tik_t1 := u.Tik("t1")
-		u.Duration("t1", tik_t1)
+		d, t1 := u.LogBegin("t1")
+		u.LogEnd(d, t1)
 
-		tik_t2 := u.Tik("t2")
-		u.Duration("t2", tik_t2)
+		d, t2 := u.LogBegin("t2")
+		u.LogEnd(d, t2)
 
-		tik_t3 := u.Tik("t3")
-		u.Duration("t3", tik_t3)
+		d, t3 := u.LogBegin("t3")
+		u.LogEnd(d, t3)
 
-		tik_t4 := u.Tik("t4")
-		u.Duration("t4", tik_t4)
+		d, t4 := u.LogBegin("t4")
+		u.LogEnd(d, t4)
 
-		tik_t5 := u.Tik("t5")
-		u.Duration("t5", tik_t5)
+		d, t5 := u.LogBegin("t5")
+		u.LogEnd(d, t5)
 
-		u.Duration("test", tik_test)
+		u.LogEnd(d, test)
 
 
 
@@ -91,8 +91,7 @@ command(s) that get executed on start, edit the args parameter of the spec. See
 		if err != nil {
 			return err
 		}
-		u.Duration("create", tik)
-		u.LogFlush()
+		u.LogEnd(d, t)
 		// exit with the container's exit status so any external supervisor is
 		// notified of the exit with the correct exit status.
 		os.Exit(status)

@@ -17,6 +17,7 @@ import (
 	"github.com/opencontainers/selinux/go-selinux"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
+	u "github.com/YesZhen/superlog_go"
 )
 
 type linuxStandardInit struct {
@@ -44,6 +45,7 @@ func (l *linuxStandardInit) getSessionRingParams() (string, uint32, uint32) {
 }
 
 func (l *linuxStandardInit) Init() error {
+	defer u.LogEnd(u.LogBegin("Init"))
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	if !l.config.Config.NoNewKeyring {

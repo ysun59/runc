@@ -13,7 +13,7 @@ import (
 	"github.com/opencontainers/runc/libcontainer/intelrdt"
 	"github.com/opencontainers/runc/libcontainer/system"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 type mockCgroupManager struct {
@@ -119,7 +119,7 @@ func (m *mockProcess) startTime() (uint64, error) {
 }
 
 func (m *mockProcess) start() error {
-	defer u.Duration(u.Track("mockProcess.start"))
+	defer u.LogEnd(u.LogBegin("mockProcess.start"))
 	return nil
 }
 

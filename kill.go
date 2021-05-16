@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli"
 	"golang.org/x/sys/unix"
 //	u "github.com/runc/utils"
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 var killCommand = cli.Command{
@@ -33,8 +33,7 @@ signal to the init process of the "ubuntu01" container:
 		},
 	},
 	Action: func(context *cli.Context) error {
-		defer u.LogFlush()
-		defer u.Duration(u.Track("kill"))
+		defer u.LogEnd(u.LogBegin("kill"))
 		if err := checkArgs(context, 1, minArgs); err != nil {
 			return err
 		}

@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 const (
@@ -53,7 +53,7 @@ func ExitStatus(status unix.WaitStatus) int {
 
 // WriteJSON writes the provided struct v to w using standard json marshaling
 func WriteJSON(w io.Writer, v interface{}) error {
-	defer u.Duration(u.Track("WriteJSON"))
+	defer u.LogEnd(u.LogBegin("WriteJSON"))
 	data, err := json.Marshal(v)
 	if err != nil {
 		return err

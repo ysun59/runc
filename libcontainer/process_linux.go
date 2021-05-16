@@ -24,7 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 
-	u "github.com/opencontainers/runc/utils"
+	u "github.com/YesZhen/superlog_go"
 )
 
 // Synchronisation value for cgroup namespace setup.
@@ -89,7 +89,7 @@ func (p *setnsProcess) signal(sig os.Signal) error {
 }
 
 func (p *setnsProcess) start() (retErr error) {
-	defer u.Duration(u.Track("setnsProcess.start"))
+	defer u.LogEnd(u.LogBegin("setnsProcess.start"))
 	defer p.messageSockPair.parent.Close()
 	err := p.cmd.Start()
 	// close the write-side of the pipes (controlled by child)
@@ -292,7 +292,7 @@ func (p *initProcess) getChildPid() (int, error) {
 }
 
 func (p *initProcess) waitForChildExit(childPid int) error {
-	defer u.Duration(u.Track("initProcess.waitForChildExit"))
+	defer u.LogEnd(u.LogBegin("initProcess.waitForChildExit"))
 	status, err := p.cmd.Process.Wait()
 	if err != nil {
 		p.cmd.Wait()
@@ -313,7 +313,7 @@ func (p *initProcess) waitForChildExit(childPid int) error {
 }
 
 func (p *initProcess) start() (retErr error) {
-	defer u.Duration(u.Track("initProcess.start"))
+	defer u.LogEnd(u.LogBegin("initProcess.start"))
 	defer p.messageSockPair.parent.Close()
 	err := p.cmd.Start()
 	p.process.ops = p
@@ -349,11 +349,11 @@ func (p *initProcess) start() (retErr error) {
 			return newSystemErrorWithCause(err, "applying Intel RDT configuration for process")
 		}
 	}
-	tik := u.Tik("io.Copy")
+	d, t := u.LogBegin("io.Copy")
 	if _, err := io.Copy(p.messageSockPair.parent, p.bootstrapData); err != nil {
 		return newSystemErrorWithCause(err, "copying bootstrap data to pipe")
 	}
-	u.Duration("io.Copy", tik)
+	u.LogEnd(d, t)
 	childPid, err := p.getChildPid()
 	if err != nil {
 		return newSystemErrorWithCause(err, "getting the final child's pid from pipe")
@@ -368,14 +368,14 @@ func (p *initProcess) start() (retErr error) {
 	}
 	p.setExternalDescriptors(fds)
 
-	tik = u.Tik("initProcess.start:setCgroupNamespace")
+	d, t = u.LogBegin("initProcess.start:setCgroupNamespace")
 	// Now it's time to setup cgroup namesapce
 	if p.config.Config.Namespaces.Contains(configs.NEWCGROUP) && p.config.Config.Namespaces.PathOf(configs.NEWCGROUP) == "" {
 		if _, err := p.messageSockPair.parent.Write([]byte{createCgroupns}); err != nil {
 			return newSystemErrorWithCause(err, "sending synchronization value to init process")
 		}
 	}
-	u.Duration("initProcess.start:setCgroupNamespace", tik)
+	u.LogEnd(d, t)
 
 	// Wait for our first child to exit
 	if err := p.waitForChildExit(childPid); err != nil {
@@ -396,11 +396,11 @@ func (p *initProcess) start() (retErr error) {
 		sentResume bool
 	)
 
-	tik = u.Tik("initProcess.start:sync")
+	d, t = u.LogBegin("initProcess.start:sync")
 	ierr := parseSync(p.messageSockPair.parent, func(sync *syncT) error {
 		switch sync.Type {
 		case procReady:
-			tik_procReady := u.Tik("sync_procReady")
+			d, t := u.LogBegin("sync_procReady")
 			// set rlimits, this has to be done here because we lose permissions
 			// to raise the limits once we enter a user-namespace
 			if err := setupRlimits(p.config.Rlimits, p.pid()); err != nil {
@@ -463,29 +463,29 @@ func (p *initProcess) start() (retErr error) {
 				return newSystemErrorWithCause(err, "writing syncT 'run'")
 			}
 			sentRun = true
-			u.Duration("sync_procReady", tik_procReady)
+			u.LogEnd(d, t)
 		case procHooks:
-			tik_procHooks := u.Tik("sync_procHooks")
+			d, t := u.LogBegin("sync_procHooks")
 			// Setup cgroup before prestart hook, so that the prestart hook could apply cgroup permissions.
-			tik_cgroup := u.Tik("cgroup")
+			d, t_cgroup := u.LogBegin("cgroup")
 			if err := p.manager.Set(p.config.Config); err != nil {
 				return newSystemErrorWithCause(err, "setting cgroup config for procHooks process")
 			}
-			u.Duration("cgroup", tik_cgroup)
+			u.LogEnd(d, t_cgroup)
 
-			tik_intelRdtManager := u.Tik("intelRdtManager")
+			d, t_intelRdtManager := u.LogBegin("intelRdtManager")
 			if p.intelRdtManager != nil {
 				if err := p.intelRdtManager.Set(p.config.Config); err != nil {
 					return newSystemErrorWithCause(err, "setting Intel RDT config for procHooks process")
 				}
 			}
-			u.Duration("intelRdtManager", tik_intelRdtManager)
+			u.LogEnd(d, t_intelRdtManager)
 
-			tik_hooks := u.Tik("hooks")
+			d, t_hooks := u.LogBegin("hooks")
 			if p.config.Config.Hooks != nil {
-				tik_currentOCIState := u.Tik("currentOCIState")
+				d, t := u.LogBegin("currentOCIState")
 				s, err := p.container.currentOCIState()
-				u.Duration("currentOCIState", tik_currentOCIState)
+				u.LogEnd(d, t)
 				if err != nil {
 					return err
 				}
@@ -494,26 +494,26 @@ func (p *initProcess) start() (retErr error) {
 				s.Status = specs.StateCreating
 				hooks := p.config.Config.Hooks
 
-				tik_configsPrestart := u.Tik("configsPrestart")
+				d, t = u.LogBegin("configsPrestart")
 				if err := hooks[configs.Prestart].RunHooks(s); err != nil {
 					return err
 				}
-				u.Duration("configsPrestart", tik_configsPrestart)
+				u.LogEnd(d, t)
 
-				tik_configsCreateRuntime := u.Tik("configsCreateRuntime")
+				d, t = u.LogBegin("configsCreateRuntime")
 				if err := hooks[configs.CreateRuntime].RunHooks(s); err != nil {
 					return err
 				}
-				u.Duration("configsCreateRuntime", tik_configsCreateRuntime)
+				u.LogEnd(d, t)
 			}
 
-			u.Duration("hooks", tik_hooks)
+			u.LogEnd(d, t_hooks)
 			// Sync with child.
 			if err := writeSync(p.messageSockPair.parent, procResume); err != nil {
 				return newSystemErrorWithCause(err, "writing syncT 'resume'")
 			}
 			sentResume = true
-			u.Duration("sync_procHooks", tik_procHooks)
+			u.LogEnd(d, t)
 		default:
 			return newSystemError(errors.New("invalid JSON payload from child"))
 		}
@@ -521,7 +521,7 @@ func (p *initProcess) start() (retErr error) {
 		return nil
 	})
 
-	u.Duration("initProcess.start:sync", tik)
+	u.LogEnd(d, t)
 
 	if !sentRun {
 		return newSystemErrorWithCause(ierr, "container init")
@@ -577,7 +577,7 @@ func (p *initProcess) updateSpecState() error {
 }
 
 func (p *initProcess) sendConfig() error {
-	defer u.Duration(u.Track("initProcess.sendConfig"))
+	defer u.LogEnd(u.LogBegin("initProcess.sendConfig"))
 	// send the config to the container's init process, we don't use JSON Encode
 	// here because there might be a problem in JSON decoder in some cases, see:
 	// https://github.com/docker/docker/issues/14203#issuecomment-174177790
@@ -585,7 +585,7 @@ func (p *initProcess) sendConfig() error {
 }
 
 func (p *initProcess) createNetworkInterfaces() error {
-	defer u.Duration(u.Track("initProcess.createNetworkInterfaces"))
+	defer u.LogEnd(u.LogBegin("initProcess.createNetworkInterfaces"))
 	for _, config := range p.config.Config.Networks {
 		strategy, err := getStrategy(config.Type)
 		if err != nil {

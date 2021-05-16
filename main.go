@@ -13,6 +13,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	u "github.com/YesZhen/superlog_go"
 )
 
 // version will be populated by the Makefile, read from
@@ -51,6 +52,7 @@ value for "bundle" is the current directory.`
 )
 
 func main() {
+	u.SetName("RunC")
 	app := cli.NewApp()
 	app.Name = "runc"
 	app.Usage = usage
